@@ -7,7 +7,7 @@ set -e
 
 # Install Docker Engine
 sudo curl -fsSL https://get.docker.com/ | sh
-sudo service docker start
+sudo service docker start || true
 sudo docker run hello-world
 
 # Install docker-compose as a Docker container
