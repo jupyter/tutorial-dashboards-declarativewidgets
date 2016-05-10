@@ -1,0 +1,9 @@
+domain=cloudet.xyz
+cpu=1
+memory=4096
+network=100
+os=UBUNTU_14_64
+datacenter=wdc01
+billing=hourly
+postinstall=https://raw.githubusercontent.com/ibm-et/pydata2016/master/bin/post-install.sh
+tag=pydata2016
