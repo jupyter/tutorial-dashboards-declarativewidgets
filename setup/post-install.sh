@@ -4,6 +4,9 @@
 
 set -e
 
+# Install system packages
+apt-get update && apt-get install -y git
+
 PYDATA_DIR="$HOME/pydata2016"
 
 # Clone PyData repo
