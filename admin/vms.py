@@ -113,21 +113,25 @@ def ssh_cmd(ctx, host_field):
 @cli.command()
 @click.pass_context
 @click.argument('hostname')
-def create(ctx, hostname):
+@click.option('-s', type=int, default=0, help='Starting number for hostname suffix')
+@click.option('-n', type=int, default=1, help='Number of hosts to create')
+def create(ctx, s, n, hostname):
     '''Create a virtual machine instance.'''
-    settings = VM_SETTINGS
-    settings.update(dict(
-        hostname=hostname,
-        domain=ctx.obj['domain'],
-        tags=','.join(ctx.obj['tags'])
-    ))
+    for i in range(s, n+s):
+        settings = VM_SETTINGS.copy()
+        settings.update(dict(
+            hostname='{}{}'.format(hostname, i if n > 1 else ''),
+            domain=ctx.obj['domain'],
+            tags=','.join(ctx.obj['tags'])
+        ))
 
-    mgr = SoftLayer.VSManager(_client)
-    # Verify virtual instance settings before pulling the trigger
-    # (will raise exception if invalid)
-    instance = mgr.verify_create_instance(**settings)
-    instance = mgr.create_instance(**settings)
-    click.echo('Created instance {}'.format(instance['id']))
+        mgr = SoftLayer.VSManager(_client)
+        # Verify virtual instance settings before pulling the trigger
+        # (will raise exception if invalid)
+        instance = mgr.verify_create_instance(**settings)
+        click.echo('Creating host {}'.format(settings['hostname']))
+        instance = mgr.create_instance(**settings)
+        click.echo('Created instance {}'.format(instance['id']))
 
 def abort_if_false(ctx, param, value):
     if not value:
@@ -139,42 +143,52 @@ def abort_if_false(ctx, param, value):
 @click.option('--yes', is_flag=True, callback=abort_if_false,
               expose_value=False,
               prompt='Are you sure you want to delete this virtual machine?')
-def cancel(ctx, hostname):
+def cancel(ctx, s, n, hostname):
     '''Cancel virtual machine instance.'''
-    # Remove DNS records
-    zone_name = ctx.obj['domain']
-    _delete_dns_records(zone_name, hostname)
-    # Cancel instance
-    instance = _get_instance(hostname)
-    click.echo('Canceling {} ({})'.format(
-        instance['fullyQualifiedDomainName'], instance['id']
-    ))
-    mgr = SoftLayer.VSManager(_client)
-    mgr.cancel_instance(instance['id'])
+    for i in range(s, n+s):
+        hostname_i = '{}{}'.format(hostname, i if n > 1 else '')
+        # Remove DNS records
+        zone_name = ctx.obj['domain']
+        _delete_dns_records(zone_name, hostname_i)
+        # Cancel instance
+        instance = _get_instance(hostname_i)
+        click.echo('Canceling {} ({})'.format(
+            instance['fullyQualifiedDomainName'], instance['id']
+        ))
+        mgr = SoftLayer.VSManager(_client)
+        mgr.cancel_instance(instance['id'])
 
 @cli.command()
 @click.pass_context
+@click.option('-s', type=int, default=0, help='Starting number for hostname suffix')
+@click.option('-n', type=int, default=1, help='Number of hosts to create')
 @click.argument('hostname')
-def add_dns(ctx, hostname):
+def add_dns(ctx, s, n, hostname):
     '''Add DNS record for hostname.'''
-    zone_name = ctx.obj['domain']
-    zone_id = _get_dns_zone_id(zone_name)
-    instance = _get_instance(hostname)
-    mgr = SoftLayer.DNSManager(_client)
-    click.echo('Adding record {host} -> {data} in DNS zone {zone}'.format(
-        host=hostname, data=instance['primaryIpAddress'], zone=zone_name,
-    ))
-    mgr.create_record(
-        zone_id, hostname, 'a', instance['primaryIpAddress'], ttl=60*15
-    )
+    for i in range(s, n+s):
+        hostname_i = '{}{}'.format(hostname, i if n > 1 else '')
+        zone_name = ctx.obj['domain']
+        zone_id = _get_dns_zone_id(zone_name)
+        instance = _get_instance(hostname_i)
+        mgr = SoftLayer.DNSManager(_client)
+        click.echo('Adding record {host} -> {data} in DNS zone {zone}'.format(
+            host=hostname_i, data=instance['primaryIpAddress'], zone=zone_name,
+        ))
+        mgr.create_record(
+            zone_id, hostname_i, 'a', instance['primaryIpAddress'], ttl=60*15
+        )
 
 @cli.command()
 @click.pass_context
+@click.option('-s', type=int, default=0, help='Starting number for hostname suffix')
+@click.option('-n', type=int, default=1, help='Number of hosts to create')
 @click.argument('hostname')
-def rm_dns(ctx, hostname):
+def rm_dns(ctx, s, n, hostname):
     '''Remove DNS records for hostname.'''
     zone_name = ctx.obj['domain']
-    _delete_dns_records(zone_name, hostname)
+    for i in range(s, n+s):
+        hostname_i = '{}{}'.format(hostname, i if n > 1 else '')
+        _delete_dns_records(zone_name, hostname_i)
 
 def _list_instances(**kwargs):
     mgr = SoftLayer.VSManager(_client)
