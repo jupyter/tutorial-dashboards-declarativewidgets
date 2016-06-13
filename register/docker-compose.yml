@@ -1,0 +1,26 @@
+---
+version: "2"
+services:
+    notebook:
+        build:
+            context: .
+            dockerfile: Dockerfile.notebook
+        ports:
+            - "127.0.0.1:8888:8888"
+        volumes:
+            - ./:/home/jovyan/work
+        environment:
+            PASSWORD:
+    kg:
+        build:
+            context: .
+            dockerfile: Dockerfile.kg
+        ports:
+            - "127.0.0.1:8889:8888"
+        volumes:
+            - ./:/home/jovyan/work
+        environment:
+            KG_IP: "0.0.0.0"
+            KG_API: "notebook-http"
+            KG_SEED_URI: "/home/jovyan/work/registration.ipynb"
+

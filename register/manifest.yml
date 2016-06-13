@@ -1,0 +1,11 @@
+---
+applications:
+- memory: 512M
+  instances: 2
+  path: .
+  buildpack: https://github.com/cloudfoundry/buildpack-python.git
+  command: >
+    jupyter-kernelgateway --KernelGatewayApp.port=$PORT
+    --KernelGatewayApp.ip=0.0.0.0
+    --KernelGatewayApp.api=notebook-http
+    --KernelGatewayApp.seed_uri="$SEED_URI"

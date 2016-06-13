@@ -1,0 +1,5 @@
+name: slasim
+dependencies:
+- pip
+- pip:
+    - jupyter_kernel_gateway==0.5.1

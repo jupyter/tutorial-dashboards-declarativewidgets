@@ -1,0 +1,3 @@
+FROM jupyter/pyspark-notebook:8015c88c4b11
+RUN pip install jupyter_kernel_gateway==0.5.1
+CMD ["jupyter-kernelgateway"]
