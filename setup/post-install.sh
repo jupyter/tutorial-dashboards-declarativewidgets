@@ -5,7 +5,7 @@
 set -e
 
 # Install system packages
-apt-get update && apt-get install -y git
+apt-get update && apt-get install -y git python-minimal
 
 PYDATA_DIR="$HOME/pydata2016"
 

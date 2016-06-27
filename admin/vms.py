@@ -2,9 +2,12 @@
 
 import sys
 import SoftLayer
-from prettytable import PrettyTable
 import click
 import requests
+import json
+import string
+import random
+from prettytable import PrettyTable
 from requests import ConnectionError, Timeout
 
 _client = SoftLayer.Client()
@@ -124,6 +127,7 @@ def create(ctx, s, n, hostname):
             domain=ctx.obj['domain'],
             tags=','.join(ctx.obj['tags'])
         ))
+        settings['userdata'] = json.dumps(_create_user_metadata(settings))
 
         mgr = SoftLayer.VSManager(_client)
         # Verify virtual instance settings before pulling the trigger
@@ -236,6 +240,31 @@ def _check_nb_server_status(host, port=8888):
         return requests.get(url, timeout=0.5).status_code
     except (ConnectionError, Timeout) as e:
         pass
+        
+def _create_key(length):
+    '''Creates a secure-enough-for-a-tutorial-session random string of numbers 
+    and digits.
+    '''
+    chars = string.ascii_letters + string.digits
+    rnd = random.SystemRandom()
+    return ''.join(rnd.choice(chars) for i in range(length))
+
+def _create_user_metadata(settings):
+    '''Create user metadata in the format expected by setup-credentials.py'''
+    nb_password = _create_key(10)
+    db_username = 'pydata'
+    db_password = _create_key(10)
+    db_fqdn = '{}.{}'.format(settings['hostname'], settings['domain'])
+    api_token = _create_key(64)
+
+    return {
+        'db_secrets.env': '''USERNAME={db_username}
+PASSWORD={db_password}
+AUTH_TOKEN={api_token}
+PUBLIC_LINK_PATTERN=http://{db_fqdn}:3000'''.format(**locals()),
+        'nb_secrets.env': '''PASSWORD={nb_password}
+DASHBOARD_SERVER_AUTH_TOKEN={api_token}'''.format(**locals())
+    }
 
 if __name__ == '__main__':
     cli(obj={})
