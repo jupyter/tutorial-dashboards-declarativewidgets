@@ -141,7 +141,7 @@ def abort_if_false(ctx, param, value):
 @click.pass_context
 @click.argument('hostname')
 @click.option('-s', type=int, default=0, help='Starting number for hostname suffix')
-@click.option('-n', type=int, default=1, help='Number of hosts to create')
+@click.option('-n', type=int, default=1, help='Number of hosts to cancel')
 @click.option('--yes', is_flag=True, callback=abort_if_false,
               expose_value=False,
               prompt='Are you sure you want to delete this virtual machine?')
@@ -163,7 +163,7 @@ def cancel(ctx, s, n, hostname):
 @cli.command()
 @click.pass_context
 @click.option('-s', type=int, default=0, help='Starting number for hostname suffix')
-@click.option('-n', type=int, default=1, help='Number of hosts to create')
+@click.option('-n', type=int, default=1, help='Number of hosts to add DNS to')
 @click.argument('hostname')
 def add_dns(ctx, s, n, hostname):
     '''Add DNS record for hostname.'''
@@ -183,7 +183,7 @@ def add_dns(ctx, s, n, hostname):
 @cli.command()
 @click.pass_context
 @click.option('-s', type=int, default=0, help='Starting number for hostname suffix')
-@click.option('-n', type=int, default=1, help='Number of hosts to create')
+@click.option('-n', type=int, default=1, help='Number of hosts to remove DNS from')
 @click.argument('hostname')
 def rm_dns(ctx, s, n, hostname):
     '''Remove DNS records for hostname.'''
