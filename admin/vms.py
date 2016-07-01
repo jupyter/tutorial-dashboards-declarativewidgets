@@ -251,20 +251,13 @@ def _create_key(length):
 
 def _create_user_metadata(settings):
     '''Create user metadata in the format expected by setup-credentials.py'''
-    nb_password = _create_key(10)
-    db_username = 'pydata'
-    db_password = _create_key(10)
-    db_fqdn = '{}.{}'.format(settings['hostname'], settings['domain'])
-    api_token = _create_key(64)
-
-    return {
-        'db_secrets.env': '''USERNAME={db_username}
-PASSWORD={db_password}
-AUTH_TOKEN={api_token}
-PUBLIC_LINK_PATTERN=http://{db_fqdn}:3000'''.format(**locals()),
-        'nb_secrets.env': '''PASSWORD={nb_password}
-DASHBOARD_SERVER_AUTH_TOKEN={api_token}'''.format(**locals())
-    }
+    return dict(
+        nb_password=_create_key(10),
+        db_username='pydata',
+        db_password=_create_key(10),
+        db_fqdn='{}.{}'.format(settings['hostname'], settings['domain']),
+        api_token=_create_key(64)
+    )
 
 if __name__ == '__main__':
     cli(obj={})
