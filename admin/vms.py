@@ -38,34 +38,47 @@ def cli(ctx, tags, domain):
     ctx.obj['domain'] = domain
 
 @cli.command()
+@click.option('--creds/--no-creds',
+              default=False,
+              help='''Show service credentials.''')
 @click.pass_context
-def list(ctx):
+def list(ctx, creds):
     '''List virtual machines.'''
     # List specific fields
     instances = _list_instances(
         tags=ctx.obj['tags'],
         domain=ctx.obj['domain'],
-        mask='mask[id,hostname,fullyQualifiedDomainName,primaryIpAddress,status]'
+        mask='mask[id,hostname,fullyQualifiedDomainName,primaryIpAddress,status,userData]'
     )
     # For checking if hosts have DNS entries
     dns_records = _get_dns_records(ctx.obj['domain'])
     dns_hosts = [x['host'] for x in dns_records]
 
     cols = ['ID', 'FQDN', 'PUBLIC_IP', 'STATUS', 'DNS']
+    if creds:
+        cols += ['NB_PASS', 'DB_PASS']
     t = PrettyTable(cols, border=False)
     for instance in instances:
-        t.add_row([
+        row = [
             instance['id'],
             instance['fullyQualifiedDomainName'],
             instance['primaryIpAddress'] if 'primaryIpAddress' in instance else '',
             instance['status']['name'],
             instance['hostname'] in dns_hosts
-        ])
+        ]
+        if creds:
+            try:
+                info = json.loads(instance['userData'][0]['value'])
+            except (KeyError, IndexError):
+                row += ['', '']
+            else:
+                row += [info['nb_password'], info['db_password']]
+        t.add_row(row)
     click.echo(t)
 
 @cli.command()
 @click.pass_context
-def nb_status(ctx):
+def status(ctx):
     '''List status code of notebook servers.'''
     instances = _list_instances(
         tags=ctx.obj['tags'],
@@ -73,16 +86,18 @@ def nb_status(ctx):
         mask='mask[id,hostname,fullyQualifiedDomainName,primaryIpAddress]'
     )
 
-    cols = ['ID', 'FQDN', 'PUBLIC_IP', 'STATUS_CODE']
+    cols = ['ID', 'FQDN', 'PUBLIC_IP', 'NB_STATUS', 'DB_STATUS']
     t = PrettyTable(cols, border=False)
     for instance in instances:
         ip = instance['primaryIpAddress'] if 'primaryIpAddress' in instance else ''
-        status_code = _check_nb_server_status(ip) if ip else ''
+        nb_status = _check_server_status(ip, port=8888) if ip else ''
+        db_status = _check_server_status(ip, port=3000) if ip else ''
         t.add_row([
             instance['id'],
             instance['fullyQualifiedDomainName'],
             ip,
-            status_code or ''
+            nb_status,
+            db_status
         ])
     click.echo(t)
 
@@ -91,8 +106,8 @@ def nb_status(ctx):
               default=True, show_default=True)
 @click.option('--ip', 'host_field', flag_value='primaryIpAddress')
 @click.pass_context
-def ssh_cmd(ctx, host_field):
-    '''Show ssh commands for virtual machines.'''
+def ssh(ctx, host_field):
+    '''Show ssh commands.'''
     instances = _list_instances(
         tags=ctx.obj['tags'],
         mask='mask[operatingSystem.passwords]'
@@ -164,12 +179,17 @@ def cancel(ctx, s, n, hostname):
         mgr = SoftLayer.VSManager(_client)
         mgr.cancel_instance(instance['id'])
 
-@cli.command()
+@cli.group()
+def dns(): 
+    '''Add / remove DNS entries.'''
+    pass
+
+@dns.command()
 @click.pass_context
 @click.option('-s', type=int, default=0, help='Starting number for hostname suffix')
 @click.option('-n', type=int, default=1, help='Number of hosts to add DNS to')
 @click.argument('hostname')
-def add_dns(ctx, s, n, hostname):
+def add(ctx, s, n, hostname):
     '''Add DNS record for hostname.'''
     for i in range(s, n+s):
         hostname_i = '{}{}'.format(hostname, i if n > 1 else '')
@@ -184,12 +204,12 @@ def add_dns(ctx, s, n, hostname):
             zone_id, hostname_i, 'a', instance['primaryIpAddress'], ttl=60*15
         )
 
-@cli.command()
+@dns.command()
 @click.pass_context
 @click.option('-s', type=int, default=0, help='Starting number for hostname suffix')
 @click.option('-n', type=int, default=1, help='Number of hosts to remove DNS from')
 @click.argument('hostname')
-def rm_dns(ctx, s, n, hostname):
+def rm(ctx, s, n, hostname):
     '''Remove DNS records for hostname.'''
     zone_name = ctx.obj['domain']
     for i in range(s, n+s):
@@ -234,7 +254,7 @@ def _delete_dns_records(zone_name, hostname):
         ))
         mgr.delete_record(record['id'])
 
-def _check_nb_server_status(host, port=8888):
+def _check_server_status(host, port=8888):
     try:
         url = 'http://{}:{}'.format(host, port)
         return requests.get(url, timeout=0.5).status_code
