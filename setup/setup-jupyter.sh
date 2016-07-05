@@ -10,10 +10,10 @@ PROJECT=dashboards_setup
 rm -rf $PROJECT
 # Clone dashboards setup repo
 git clone https://github.com/jupyter-incubator/${PROJECT}.git
+
+pushd dashboards_setup/docker_deploy
 # Reset to a fixed commit
 git reset --hard $SHA 
-  
-pushd dashboards_setup/docker_deploy
 # Fetch pre-assigned credentials from user metadata
 python "${MY_DIR}/setup-credentials.py"
 # Build and run jupyter/notebook, jupyter/dashboards_server, and
