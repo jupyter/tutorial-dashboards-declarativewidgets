@@ -48,13 +48,13 @@ def list(ctx, creds):
     instances = _list_instances(
         tags=ctx.obj['tags'],
         domain=ctx.obj['domain'],
-        mask='mask[id,hostname,fullyQualifiedDomainName,primaryIpAddress,status,userData,operatingSystem.passwords]'
+        mask='mask[id,hostname,fullyQualifiedDomainName,primaryIpAddress,status,userData,operatingSystem.passwords,notes]'
     )
     # For checking if hosts have DNS entries
     dns_records = _get_dns_records(ctx.obj['domain'])
     dns_hosts = [x['host'] for x in dns_records]
 
-    cols = ['ID', 'FQDN', 'PUBLIC_IP', 'STATUS', 'DNS']
+    cols = ['ID', 'FQDN', 'PUBLIC_IP', 'STATUS', 'DNS', 'OWNER']
     if creds:
         cols += ['NB_PASS', 'DB_PASS', 'SSH_PASS']
     t = PrettyTable(cols, border=False)
@@ -64,7 +64,8 @@ def list(ctx, creds):
             instance['fullyQualifiedDomainName'],
             instance['primaryIpAddress'] if 'primaryIpAddress' in instance else '',
             instance['status']['name'],
-            instance['hostname'] in dns_hosts
+            instance['hostname'] in dns_hosts,
+            instance.get('notes', '')
         ]
         if creds:
             try:
@@ -158,6 +159,31 @@ def cancel(ctx, s, n, hostname):
         mgr = SoftLayer.VSManager(_client)
         mgr.cancel_instance(instance['id'])
 
+@cli.command()
+@click.pass_context
+@click.argument('hostname')
+@click.argument('owner')
+@click.option('-f', is_flag=True, expose_value=True, help='Force assignment if already owned')
+def assign(ctx, f, hostname, owner):
+    '''Assign a VM owner.'''
+    zone_name = ctx.obj['domain']
+    note = _get_note(hostname)
+    if note and not f: 
+        click.echo('{}.{} already assigned to {}'.format(hostname, zone_name, note))
+        return ctx.abort()
+    _set_note(hostname, owner)
+    click.echo('Assigned {} to {}.{}'.format(owner, hostname, zone_name))
+    
+@cli.command()
+@click.pass_context
+@click.argument('hostname')
+def release(ctx, hostname):
+    '''Remove a VM owner.'''
+    zone_name = ctx.obj['domain']
+    # Have to pass a blank in the string, client treats '' and None as a no-op
+    _set_note(hostname, ' ')
+    click.echo('Removed owner from {}.{}'.format(hostname, zone_name))
+
 @cli.group()
 def dns(): 
     '''Add / remove DNS entries.'''
@@ -239,7 +265,16 @@ def _check_server_status(host, port=8888):
         return requests.get(url, timeout=0.5).status_code
     except (ConnectionError, Timeout) as e:
         pass
-        
+
+def _get_note(hostname):
+    instance = _get_instance(hostname, mask='mask[notes]')
+    return instance.get('notes', '').strip()
+
+def _set_note(hostname, note):
+    instance = _get_instance(hostname)
+    mgr = SoftLayer.VSManager(_client)
+    mgr.edit(instance['id'], notes=note)
+
 def _create_key(length):
     '''Creates a secure-enough-for-a-tutorial-session random string of numbers 
     and digits.
@@ -257,6 +292,7 @@ def _create_user_metadata(settings):
         db_fqdn='{}.{}'.format(settings['hostname'], settings['domain']),
         api_token=_create_key(64)
     )
+
 
 if __name__ == '__main__':
     cli(obj={})
