@@ -48,7 +48,7 @@ def list(ctx, creds):
     instances = _list_instances(
         tags=ctx.obj['tags'],
         domain=ctx.obj['domain'],
-        mask='mask[id,hostname,fullyQualifiedDomainName,primaryIpAddress,status,userData]'
+        mask='mask[id,hostname,fullyQualifiedDomainName,primaryIpAddress,status,userData,operatingSystem.passwords]'
     )
     # For checking if hosts have DNS entries
     dns_records = _get_dns_records(ctx.obj['domain'])
@@ -56,7 +56,7 @@ def list(ctx, creds):
 
     cols = ['ID', 'FQDN', 'PUBLIC_IP', 'STATUS', 'DNS']
     if creds:
-        cols += ['NB_PASS', 'DB_PASS']
+        cols += ['NB_PASS', 'DB_PASS', 'SSH_PASS']
     t = PrettyTable(cols, border=False)
     for instance in instances:
         row = [
@@ -73,6 +73,12 @@ def list(ctx, creds):
                 row += ['', '']
             else:
                 row += [info['nb_password'], info['db_password']]
+            try:
+                info = instance['operatingSystem']['passwords'][0]
+            except (KeyError, IndexError):
+                row += ['']
+            else:
+                row += [info['password']]
         t.add_row(row)
     click.echo(t)
 
@@ -100,33 +106,6 @@ def status(ctx):
             db_status
         ])
     click.echo(t)
-
-@cli.command()
-@click.option('--fqdn', 'host_field', flag_value='fullyQualifiedDomainName',
-              default=True, show_default=True)
-@click.option('--ip', 'host_field', flag_value='primaryIpAddress')
-@click.pass_context
-def ssh(ctx, host_field):
-    '''Show ssh commands.'''
-    instances = _list_instances(
-        tags=ctx.obj['tags'],
-        mask='mask[operatingSystem.passwords]'
-    )
-    for instance in instances:
-        passwords = []
-        try:
-            passwords = instance['operatingSystem']['passwords']
-        except KeyError:
-            continue
-        if not passwords:
-            continue
-        password = passwords[0]
-        host = instance[host_field]
-        click.echo('ssh {user}@{host} # {password}'.format(
-            user=password['username'],
-            host=host,
-            password=password['password']
-        ))
 
 @cli.command()
 @click.pass_context
