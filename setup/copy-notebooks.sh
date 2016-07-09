@@ -16,5 +16,6 @@ VOLUME=$(docker volume ls | grep -o "dockerdeploy.*")
 HOST_DIR=$(docker volume inspect -f '{{.Mountpoint}}' "$VOLUME")
 
 # Copy notebooks and set permissions
+rm "$HOST_DIR"/*
 cp -R "$SRC"/* "$HOST_DIR"
 chown -R $USER_PID:users "$HOST_DIR"
