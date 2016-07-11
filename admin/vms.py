@@ -267,7 +267,7 @@ def _check_server_status(host, port=8888):
         pass
 
 def _get_note(hostname):
-    instance = _get_instance(hostname, mask='mask[notes]')
+    instance = _get_instance(hostname, mask='mask[hostname,notes]')
     return instance.get('notes', '').strip()
 
 def _set_note(hostname, note):
