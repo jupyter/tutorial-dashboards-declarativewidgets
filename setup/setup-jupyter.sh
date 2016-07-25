@@ -3,7 +3,7 @@
 set -e
 
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-SHA=241fdda2c7ed1497e3b2e8ccff0f0ac134ab1ea8
+SHA=1f331aeb4e1e3e0d844f7505a461d607598cdb8c
 PROJECT=dashboards_setup
 
 # Remove existing repo no matter what
