@@ -1,0 +1,1 @@
+Snapshot of prepared data from [Durham Open Data](https://opendurham.nc.gov/page/home/).
