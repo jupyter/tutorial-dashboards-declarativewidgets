@@ -1,0 +1,21 @@
+name: pydata
+dependencies:
+- openssl=1.0.2h=1
+- pip=8.1.2=py35_0
+- python=3.5.2=0
+- readline=6.2=2
+- setuptools=23.0.0=py35_0
+- sqlite=3.13.0=0
+- tk=8.5.18=0
+- wheel=0.29.0=py35_0
+- xz=5.2.2=0
+- zlib=1.2.8=3
+- pip:
+  - click==6.6
+  - prettytable==0.7.2
+  - prompt-toolkit==1.0.3
+  - pygments==2.1.3
+  - requests==2.10.0
+  - six==1.10.0
+  - softlayer==5.1.0
+  - wcwidth==0.1.7
