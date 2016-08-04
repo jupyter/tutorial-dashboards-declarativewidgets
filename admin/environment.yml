@@ -1,0 +1,5 @@
+name: pydata
+dependencies:
+- python=3.5.2=0
+- pip:
+  - softlayer==5.1.0

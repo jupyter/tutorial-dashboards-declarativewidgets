@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import SoftLayer
 import click
@@ -10,7 +11,11 @@ import random
 from prettytable import PrettyTable
 from requests import ConnectionError, Timeout
 
-_client = SoftLayer.Client()
+SOFTLAYER_USER = os.getenv('SOFTLAYER_USER')
+SOFTLAYER_API_KEY = os.getenv('SOFTLAYER_API_KEY')
+
+_client = SoftLayer.create_client_from_env(
+    username=SOFTLAYER_USER, api_key=SOFTLAYER_API_KEY)
 
 # Default virtual machine settings
 VM_SETTINGS = {
@@ -168,12 +173,12 @@ def assign(ctx, f, hostname, owner):
     '''Assign a VM owner.'''
     zone_name = ctx.obj['domain']
     note = _get_note(hostname)
-    if note and not f: 
+    if note and not f:
         click.echo('{}.{} already assigned to {}'.format(hostname, zone_name, note))
         return ctx.abort()
     _set_note(hostname, owner)
     click.echo('Assigned {} to {}.{}'.format(owner, hostname, zone_name))
-    
+
 @cli.command()
 @click.pass_context
 @click.argument('hostname')
@@ -185,7 +190,7 @@ def release(ctx, hostname):
     click.echo('Removed owner from {}.{}'.format(hostname, zone_name))
 
 @cli.group()
-def dns(): 
+def dns():
     '''Add / remove DNS entries.'''
     pass
 
@@ -276,7 +281,7 @@ def _set_note(hostname, note):
     mgr.edit(instance['id'], notes=note)
 
 def _create_key(length):
-    '''Creates a secure-enough-for-a-tutorial-session random string of numbers 
+    '''Creates a secure-enough-for-a-tutorial-session random string of numbers
     and digits.
     '''
     chars = string.ascii_letters + string.digits

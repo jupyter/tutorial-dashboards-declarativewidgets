@@ -1,0 +1,26 @@
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
+---
+version: "2"
+
+services:
+  notebook:
+    build:
+      context: .
+      args:
+        # pip versioning:
+        DASHBOARDS_VER: '0.6.*'
+        DECLWIDGETS_VER: '0.6.*'
+        CMS_VER: '0.5.*'
+        BUNDLER_VER: '0.8.*'
+    image: pydata2016/notebook
+    container_name: pydata2016-notebook
+    volumes:
+      - ./:/home/jovyan/work
+    ports:
+      - "8888:8888"
+    environment:
+      SOFTLAYER_USER: ${SOFTLAYER_USER}
+      SOFTLAYER_API_KEY: ${SOFTLAYER_API_KEY}
+      SLACK_TOKEN: ${SLACK_TOKEN}
