@@ -10,7 +10,7 @@ apt-get update && apt-get install -y git python-minimal
 PYDATA_DIR="$HOME/pydata2016"
 
 # Clone PyData repo
-git clone --depth 1 https://github.com/ibm-et/pydata2016 "$PYDATA_DIR" || true
+git clone --depth 1 https://github.com/jupyter-resources/tutorial-dashboards-declarativewidgets "$PYDATA_DIR" || true
 
 # Install Docker components
 "$PYDATA_DIR"/setup/install-docker.sh >> install-docker.log 2>&1 

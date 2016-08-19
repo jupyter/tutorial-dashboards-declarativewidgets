@@ -25,7 +25,7 @@ VM_SETTINGS = {
     'os_code': 'UBUNTU_LATEST_64',
     'nic_speed': 100,
     'datacenter': 'wdc01',
-    'post_uri': 'https://raw.githubusercontent.com/ibm-et/pydata2016/master/setup/post-install.sh',
+    'post_uri': 'https://raw.githubusercontent.com/jupyter-resources/tutorial-dashboards-declarativewidgets/master/setup/post-install.sh',
 }
 
 @click.group()
