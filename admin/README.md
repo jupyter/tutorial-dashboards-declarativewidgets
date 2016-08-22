@@ -5,8 +5,8 @@ Notes for setting up and running the tutorial talk.
 Git clone this repo.
 
 ```
-git clone https://github.com/ibm-et/pydata2016.git
-cd pydata2016/admin
+git clone git@github.com:jupyter-resources/tutorial-dashboards-declarativewidgets.git
+cd tutorial-dashboards-declarativewidgets/admin
 ```
 
 Build the admin Docker image, which runs a notebook server to host the Slack VM
